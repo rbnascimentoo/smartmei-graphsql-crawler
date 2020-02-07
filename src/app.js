@@ -24,9 +24,9 @@ var retorno = {};
 
 // Mapeamento
 var root = {
-    call: ({nameHost}) => {
+    startCrawler: ({nameHost}) => {
 
-        if(nameHost.indexOf('www.smartmei.com.br') !== -1) {
+        if(!nameHost.includes('smartmei.com.br')) {
             return retorno;
         }
 
