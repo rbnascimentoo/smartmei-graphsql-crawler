@@ -1,46 +1,69 @@
-var express = require('express');
-var express_graphql = require('express-graphql');
-const request = require('request');
+const express = require('express');
+const express_graphql = require('express-graphql');
+const { buildSchema } = require('graphql');
+const axios = require('axios')
 const cheerio = require('cheerio');
-var { buildSchema } = require('graphql');
+
+const html = "";
+const retorno = {};
+const date = new Date();
+const URL_EXCHANGE = "https://api.exchangeratesapi.io/latest?base=BRL";
+
+const getWebsiteContent = async (url) => {
+    try {
+      const response = await axios.get(url);
+      const $ = cheerio.load(response.data);
+
+      getWebsiteContentRetorn($);
+  
+    } catch (error) {
+      console.error(error)
+    }
+  };
+
+  const getWebsiteContentRetorn = async ($) => {
+    try {
+        const response = await axios.get(URL_EXCHANGE);
+
+        const channelList = $('#tarifas-2');
+
+        console.log(channelList);
+
+        retorno.dataConsulta = date.getDate() + '/' + (date.getMonth()+1) + '/' + date.getFullYear();
+        retorno.descricaoTarifa = "";
+        retorno.valorReal = parseFloat(response.data.rates.BRL) * 7;
+        retorno.valorUSD = parseFloat(response.data.rates.USD) * 7;
+        retorno.valorEUR = parseFloat(response.data.rates.EUR) * 7;
+  
+    } catch (error) {
+      console.error(error)
+    }
+  };
 
 // Schema
 var schema = buildSchema(`
     type Query {
-        startCrawler(nameHost: String!): Retorno
+        startCrawlerSmartMEI(urlSmartMEI: String!): Retorno
     }
 
     type Retorno {
-        date: String,
-        descricao: String,
+        dataConsulta: String,
+        descricaoTarifa: String,
         valorReal: Float,
         valorUSD: Float,
         valorEUR: Float
     }
 `);
 
-// Maps username to content
-var retorno = {};
-
-// Mapeamento
 var root = {
-    startCrawler: ({nameHost}) => {
+    startCrawlerSmartMEI: ({urlSmartMEI}) => {
 
-        if(!nameHost.includes('smartmei.com.br')) {
+        if(!urlSmartMEI.includes('https://www.smartmei.com.br') && !urlSmartMEI.includes('http://www.smartmei.com.br')) {
             return retorno;
         }
 
-        request(nameHost, function (err, res, body) {
-            if(err) {
-                console.log(err, "error occured while hitting URL");
-            } else {
-                console.log(body);
-            }
-        });
-
-        //Teste
-        retorno.date = '08/02/2020';
-
+        getWebsiteContent(urlSmartMEI);
+    
         return retorno;
     }
 };
