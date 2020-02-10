@@ -12,12 +12,6 @@ const URL_EXCHANGE = "https://api.exchangeratesapi.io/latest?base=BRL";
 const URL_SMARTMEI = "www.smartmei.com.br";
 const HTTPS_URL_SMARTMEI = "https://www.smartmei.com.br";
 const HTTP_URL_SMARTMEI = "http://www.smartmei.com.br";
-const pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
-            '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|'+ // domain name
-            '((\\d{1,3}\\.){3}\\d{1,3}))'+ // ip (v4) address
-            '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ //port
-            '(\\?[;&amp;a-z\\d%_.~+=-]*)?'+ // query string
-            '(\\#[-a-z\\d_]*)?$','i');
 
 /**
   * Método que realiza o crawler na url passada
@@ -77,7 +71,7 @@ const obterInformacoesCrawler = async (urlSmartMEI) => {
 /** Serviço GraphQL */
 var schema = buildSchema(`
     type Query {
-        iniciarCrawlerSmartMEI(url: String!): String
+        iniciarCrawlerSmartMEI(url: String!): Retorno
     }
 
     type Retorno {
@@ -93,21 +87,18 @@ var schema = buildSchema(`
 var root = {
   iniciarCrawlerSmartMEI: ({url}) => {
 
-      const urlParam = url.toLowerCase();
+        const urlParam = url.toLowerCase();
 
-      if(!pattern.test(urlParam)) {
-        return "nao valido";
-      }
-
-        // if(!urlParam.includes(HTTPS_URL_SMARTMEI) 
-        //     && !urlParam.includes(HTTP_URL_SMARTMEI)
-        //       && urlParam.includes(URL_SMARTMEI)) {
-        //     return retorno;
-        // }
+        //Valida URL
+        if(!urlParam.includes(HTTPS_URL_SMARTMEI) 
+            && !urlParam.includes(HTTP_URL_SMARTMEI)
+              && urlParam.includes(URL_SMARTMEI)) {
+          return retorno;
+        }
 
         obterInformacoesCrawler(urlParam);
     
-        return retorno | JSON;
+      return retorno;
     }
 };
 
