@@ -12,47 +12,45 @@ const URL_SMARTMEI = "www.smartmei.com.br";
 const HTTPS_URL_SMARTMEI = "https://www.smartmei.com.br";
 const HTTP_URL_SMARTMEI = "http://www.smartmei.com.br";
 
-const getWebsiteContent = (url) => {
+const getWebsiteContent = async (url) => {
+    try {
+      const response = await axios.get(url);
 
-  axios.get(url).then(function (response) {
       if(response) {
         const $ = cheerio.load(response.data);
-        getWebsiteContentRetorn($);
+
+        var descricaoTarifa = "";
+        var valorTransferencia = "";
+
+        $("#tarifas-2 > .row").map((i, el) => {
+          if(i === 2) {
+            descricaoTarifa = $(el).children().eq(0).text();
+            valorTransferencia = $(el).children().eq(2).text();
+          }
+        })
+
+        getWebsiteContentExchange(descricaoTarifa, valorTransferencia);
       }
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const getWebsiteContentRetorn = ($) => {
-    axios.get(URL_EXCHANGE).then(function (response) {
+  const getWebsiteContentExchange = async (descricaoTarifa, valorTransferencia) => {
 
-      if(response) {
-        const tarifas = $('#tarifas-2');
+    try {
+      const response = await axios.get(URL_EXCHANGE);
 
-        const rows = $("row row-eq-height");
+      retorno.dataConsulta = date.getDate() + '/' + (date.getMonth()+1) + '/' + date.getFullYear();
+      retorno.descricaoTarifa = descricaoTarifa.trim();
+      retorno.valorReal = parseFloat(valorTransferencia.replace('R$', '').replace(',', '.'));
+      retorno.valorUSD = parseFloat(response.data.rates.USD).toFixed(2) * retorno.valorReal ;
+      retorno.valorEUR = parseFloat(response.data.rates.EUR).toFixed(2) * retorno.valorReal ;
+     
+    } catch (error) {
+      console.error(error);
+    }
 
-        // for (let i = 0; i < rows.length; i++) {
-
-          console.log(rows[2])
-        // }
-
-        
-
-        // console.log(tarifas);
-
-        retorno.dataConsulta = date.getDate() + '/' + (date.getMonth()+1) + '/' + date.getFullYear();
-        retorno.descricaoTarifa = "";
-        retorno.valorReal = parseFloat(response.data.rates.BRL) * 7;
-        retorno.valorUSD = parseFloat(response.data.rates.USD) * 7;
-        retorno.valorEUR = parseFloat(response.data.rates.EUR) * 7;
-        
-      }       
-    })
-    .catch(function (error) {
-      console.log("error " + error);
-    });
   };
 
 // Schema
@@ -73,9 +71,11 @@ var schema = buildSchema(`
 var root = {
     startCrawlerSmartMEI: ({urlSmartMEI}) => {
 
-        if(!urlSmartMEI.toLowerCase().includes(HTTPS_URL_SMARTMEI) 
-            && !urlSmartMEI.toLowerCase().includes(HTTP_URL_SMARTMEI)
-              && urlSmartMEI.toLowerCase().includes(URL_SMARTMEI)) {
+      const url = urlSmartMEI.toLowerCase();
+
+        if(!url.includes(HTTPS_URL_SMARTMEI) 
+            && !url.includes(HTTP_URL_SMARTMEI)
+              && url.includes(URL_SMARTMEI)) {
             return retorno;
         }
 
