@@ -1,43 +1,58 @@
 const express = require('express');
 const express_graphql = require('express-graphql');
 const { buildSchema } = require('graphql');
-const axios = require('axios')
+const axios = require('axios');
 const cheerio = require('cheerio');
 
 const html = "";
 const retorno = {};
 const date = new Date();
 const URL_EXCHANGE = "https://api.exchangeratesapi.io/latest?base=BRL";
+const URL_SMARTMEI = "www.smartmei.com.br";
+const HTTPS_URL_SMARTMEI = "https://www.smartmei.com.br";
+const HTTP_URL_SMARTMEI = "http://www.smartmei.com.br";
 
-const getWebsiteContent = async (url) => {
-    try {
-      const response = await axios.get(url);
-      const $ = cheerio.load(response.data);
+const getWebsiteContent = (url) => {
 
-      getWebsiteContentRetorn($);
-  
-    } catch (error) {
-      console.error(error)
-    }
+  axios.get(url).then(function (response) {
+      if(response) {
+        const $ = cheerio.load(response.data);
+        getWebsiteContentRetorn($);
+      }
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
   };
 
-  const getWebsiteContentRetorn = async ($) => {
-    try {
-        const response = await axios.get(URL_EXCHANGE);
+  const getWebsiteContentRetorn = ($) => {
+    axios.get(URL_EXCHANGE).then(function (response) {
 
-        const channelList = $('#tarifas-2');
+      if(response) {
+        const tarifas = $('#tarifas-2');
 
-        console.log(channelList);
+        const rows = $("row row-eq-height");
+
+        // for (let i = 0; i < rows.length; i++) {
+
+          console.log(rows[2])
+        // }
+
+        
+
+        // console.log(tarifas);
 
         retorno.dataConsulta = date.getDate() + '/' + (date.getMonth()+1) + '/' + date.getFullYear();
         retorno.descricaoTarifa = "";
         retorno.valorReal = parseFloat(response.data.rates.BRL) * 7;
         retorno.valorUSD = parseFloat(response.data.rates.USD) * 7;
         retorno.valorEUR = parseFloat(response.data.rates.EUR) * 7;
-  
-    } catch (error) {
-      console.error(error)
-    }
+        
+      }       
+    })
+    .catch(function (error) {
+      console.log("error " + error);
+    });
   };
 
 // Schema
@@ -58,7 +73,9 @@ var schema = buildSchema(`
 var root = {
     startCrawlerSmartMEI: ({urlSmartMEI}) => {
 
-        if(!urlSmartMEI.includes('https://www.smartmei.com.br') && !urlSmartMEI.includes('http://www.smartmei.com.br')) {
+        if(!urlSmartMEI.toLowerCase().includes(HTTPS_URL_SMARTMEI) 
+            && !urlSmartMEI.toLowerCase().includes(HTTP_URL_SMARTMEI)
+              && urlSmartMEI.toLowerCase().includes(URL_SMARTMEI)) {
             return retorno;
         }
 
