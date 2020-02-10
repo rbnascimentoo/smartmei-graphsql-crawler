@@ -1,20 +1,33 @@
+//imports
 const express = require('express');
 const express_graphql = require('express-graphql');
 const { buildSchema } = require('graphql');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-const html = "";
+//Constants
 const retorno = {};
 const date = new Date();
 const URL_EXCHANGE = "https://api.exchangeratesapi.io/latest?base=BRL";
 const URL_SMARTMEI = "www.smartmei.com.br";
 const HTTPS_URL_SMARTMEI = "https://www.smartmei.com.br";
 const HTTP_URL_SMARTMEI = "http://www.smartmei.com.br";
+const pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
+            '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|'+ // domain name
+            '((\\d{1,3}\\.){3}\\d{1,3}))'+ // ip (v4) address
+            '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ //port
+            '(\\?[;&amp;a-z\\d%_.~+=-]*)?'+ // query string
+            '(\\#[-a-z\\d_]*)?$','i');
 
-const getWebsiteContent = async (url) => {
+/**
+  * Método que realiza o crawler na url passada
+  * Buscando o valor atual de uma Transferência do Plano Profissional no site da SmartMei
+  * 
+  *  @param {*} url 
+*/
+const obterInformacoesCrawler = async (urlSmartMEI) => {
     try {
-      const response = await axios.get(url);
+      const response = await axios.get(urlSmartMEI);
 
       if(response) {
         const $ = cheerio.load(response.data);
@@ -29,14 +42,22 @@ const getWebsiteContent = async (url) => {
           }
         })
 
-        getWebsiteContentExchange(descricaoTarifa, valorTransferencia);
+        obterInformacoesCambio(descricaoTarifa, valorTransferencia);
       }
+
     } catch (error) {
       console.error(error);
     }
   };
 
-  const getWebsiteContentExchange = async (descricaoTarifa, valorTransferencia) => {
+  /**
+   * Método que chama uma API aberta (https://api.exchangeratesapi.io) que 
+   * converta esse preço para USD (dolar americano) e EUR (Euro)
+   * 
+   * @param {*} descricaoTarifa 
+   * @param {*} valorTransferencia 
+   */
+  const obterInformacoesCambio = async (descricaoTarifa, valorTransferencia) => {
 
     try {
       const response = await axios.get(URL_EXCHANGE);
@@ -53,10 +74,10 @@ const getWebsiteContent = async (url) => {
 
   };
 
-// Schema
+/** Serviço GraphQL */
 var schema = buildSchema(`
     type Query {
-        startCrawlerSmartMEI(urlSmartMEI: String!): Retorno
+        iniciarCrawlerSmartMEI(url: String!): String
     }
 
     type Retorno {
@@ -68,23 +89,31 @@ var schema = buildSchema(`
     }
 `);
 
+/** Serviço GraphQL */
 var root = {
-    startCrawlerSmartMEI: ({urlSmartMEI}) => {
+  iniciarCrawlerSmartMEI: ({url}) => {
 
-      const url = urlSmartMEI.toLowerCase();
+      const urlParam = url.toLowerCase();
 
-        if(!url.includes(HTTPS_URL_SMARTMEI) 
-            && !url.includes(HTTP_URL_SMARTMEI)
-              && url.includes(URL_SMARTMEI)) {
-            return retorno;
-        }
+      if(!pattern.test(urlParam)) {
+        return "nao valido";
+      }
 
-        getWebsiteContent(urlSmartMEI);
+        // if(!urlParam.includes(HTTPS_URL_SMARTMEI) 
+        //     && !urlParam.includes(HTTP_URL_SMARTMEI)
+        //       && urlParam.includes(URL_SMARTMEI)) {
+        //     return retorno;
+        // }
+
+        obterInformacoesCrawler(urlParam);
     
-        return retorno;
+        return retorno | JSON;
     }
 };
 
+/**  
+ * Server App com GraphSql rodando na porta 3000
+*/
 var app = express();
 app.use('/graphql', express_graphql({
     schema: schema,
