@@ -90,9 +90,12 @@ var root = {
         const urlParam = url.toLowerCase();
 
         //Valida URL
-        if(!urlParam.includes(HTTPS_URL_SMARTMEI) 
+        if(!urlParam || (!urlParam.includes(HTTPS_URL_SMARTMEI) 
             && !urlParam.includes(HTTP_URL_SMARTMEI)
-              && urlParam.includes(URL_SMARTMEI)) {
+              && urlParam.includes(URL_SMARTMEI))) {
+
+                retorno = {};
+
           return retorno;
         }
 
