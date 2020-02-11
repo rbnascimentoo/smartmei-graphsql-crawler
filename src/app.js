@@ -87,7 +87,7 @@ var schema = buildSchema(`
 var root = {
   iniciarCrawlerSmartMEI: ({url}) => {
 
-        const urlParam = url.toLowerCase();
+        const urlParam = url.trim().toLowerCase();
 
         //Valida URL
         if(!urlParam || (!urlParam.includes(HTTPS_URL_SMARTMEI) 
