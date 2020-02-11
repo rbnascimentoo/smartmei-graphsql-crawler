@@ -58,7 +58,7 @@ const obterInformacoesCrawler = async (urlSmartMEI) => {
 
       retorno.dataConsulta = date.getDate() + '/' + (date.getMonth()+1) + '/' + date.getFullYear();
       retorno.descricaoTarifa = descricaoTarifa.trim();
-      retorno.valorReal = parseFloat(valorTransferencia.replace('R$', '').replace(',', '.'));
+      retorno.valorReal = parseFloat(valorTransferencia.replace('R$', '').replace(',', '.')).toFixed(2);
       retorno.valorUSD = parseFloat(response.data.rates.USD).toFixed(2) * retorno.valorReal ;
       retorno.valorEUR = parseFloat(response.data.rates.EUR).toFixed(2) * retorno.valorReal ;
      
