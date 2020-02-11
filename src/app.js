@@ -91,8 +91,7 @@ var root = {
 
         //Valida URL
         if(!urlParam || (!urlParam.includes(HTTPS_URL_SMARTMEI) 
-            && !urlParam.includes(HTTP_URL_SMARTMEI)
-              && urlParam.includes(URL_SMARTMEI))) {
+            && !urlParam.includes(HTTP_URL_SMARTMEI))) {
 
                 retorno = {};
 
